@@ -23,7 +23,7 @@ namespace ClientServerApplication
         private void button1_Click(object sender, EventArgs e)
         {
             ClientServerExecute ex = new ClientServerExecute();
-            ex.StartService(8080, textBox1.Text);
+            ex.StartServiceAsync(8080, textBox1.Text);
             richTextBox1.Text = ex.Output.ToString();
         }
 

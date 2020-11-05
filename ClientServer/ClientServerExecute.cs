@@ -77,9 +77,10 @@ namespace ClientServerApplication.ClientServer
                 ErrorsList.SocketExeption = true;
             }
         }
-        public void StartService(int port, string msg)
+        public async Task StartServiceAsync(int port, string msg)
         {
             Port = port;
+            //Task.Delay(100);
             Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             IPEndPoint point = new IPEndPoint(IPAddress.Loopback, Port);
             socket.Connect(point);
@@ -87,7 +88,9 @@ namespace ClientServerApplication.ClientServer
             using (StreamReader reader = new StreamReader(stream))
             using (StreamWriter writer = new StreamWriter(stream))
             {
-                Task task1 = _Recieve(reader);
+                Task.Delay(100);
+                Task task1 = Task.Factory.StartNew(() => _Recieve(reader));
+                   // _Recieve(reader);
                 if (msg != "")
                 {
                     writer.WriteLine(msg);
@@ -101,11 +104,14 @@ namespace ClientServerApplication.ClientServer
         }
         private async Task _Recieve(StreamReader reader)
         {
-            string text;
+
+            string text = "";
             while ((text = await reader.ReadLineAsync()) != null)
             {
                 Output.Append(text);
+                
             }
+          //  return text;
         }
     }
     
