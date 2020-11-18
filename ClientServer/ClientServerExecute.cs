@@ -88,16 +88,17 @@ namespace ClientServerApplication.ClientServer
             using (StreamReader reader = new StreamReader(stream))
             using (StreamWriter writer = new StreamWriter(stream))
             {
-                Task.Delay(100);
+
                 Task task1 = Task.Factory.StartNew(() => _Recieve(reader));
-                   // _Recieve(reader);
+                task1.Wait();
+                  
                 if (msg != "")
                 {
                     writer.WriteLine(msg);
                     writer.Flush();
                 }
                 socket.Shutdown(SocketShutdown.Send);
-                task1.Wait();
+               // task1.Wait();
             }
             _listsockets.Close();
           
