@@ -77,7 +77,7 @@ namespace ClientServerApplication.ClientServer
                         writer.Flush();
                     }
                     remote.Shutdown(SocketShutdown.Send);
-                    recievetask.Wait();
+                    recievetask.Wait(1000);
                 }
                 AllErrors = (List<string>)ClientErrors.Concat(ServerErrors);
 
