@@ -10,6 +10,7 @@ namespace ClientServerApplication.ClientServer
     {
         public bool IsServerCloled {get; set;}
         public bool SocketExeption { get; set; }
+        public bool SocketClosed { get; set; }
 
     }
 }

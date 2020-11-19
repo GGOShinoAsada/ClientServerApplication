@@ -12,13 +12,10 @@ namespace ClientServerApplication.ClientServer
 {
     class ClientServerExecute
     {
-        private readonly Socket _listsockets;
-
-        private int _port=8080;
+        private static Socket Client;
+    
         public StringBuilder Output = new StringBuilder();
-       
-        ErrorsList ErrorsList = new ErrorsList();
-       
+        private int _port=8080;
         public int Port
         {
             set
@@ -27,91 +24,156 @@ namespace ClientServerApplication.ClientServer
                 {
                     _port = value;
                 }
-                else
-                {
-                    throw new ArgumentOutOfRangeException();
-                }
+               
             }
             get
             {
                 return _port;
             }
         }
-        public ClientServerExecute()
+        private static int _size = 256;
+       public static int Size
         {
-            IPEndPoint listenpoint = new IPEndPoint(IPAddress.Loopback, Port);
-            ErrorsList.SocketExeption = false;
-            ErrorsList.IsServerCloled = false;
-            _listsockets = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            _listsockets.Bind(listenpoint);
-            _listsockets.Listen(1);
-            _listsockets.BeginAccept(_Accept, null);
-            ErrorsList.IsServerCloled = false;
+            get
+            {
+                return _size;
+            }
+            set
+            {
+                if (value > 0)
+                {
+                    _size = value;
+                }
+             
+            }
         }
-        private async void _Accept(IAsyncResult rez)
+       static byte[] Responce = new byte[Size];
+       public static List<string> Errors = new List<string>();
+       
+       /// <summary>
+       /// Listen client
+       /// </summary>
+       /// <param name="msg"></param>
+       /// <param name="host"></param>
+       /// <param name="port"></param>
+        public void Execute(string msg, string host="localhost",int port=8080, int n=256)
         {
+            Errors = new List<string>();
+            Port = port;
+            Size = 256;
+            Responce = new byte[Size];
+         
+            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint point = new IPEndPoint(IPAddress.Loopback, Port);
+        
             try
             {
-                using (Socket client = _listsockets.EndAccept(rez))
-                using (NetworkStream stream = new NetworkStream(client)) 
+                Client = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                Client.Bind(point);
+                Client.Listen(10);
+                TcpClient tcl = new TcpClient();
+                using (NetworkStream stream=tcl.GetStream())
                 using (StreamReader reader = new StreamReader(stream))
                 using (StreamWriter writer = new StreamWriter(stream))
                 {
-                    string data;
-                    while ((data = await reader.ReadLineAsync()) != null)
-                    {
-                        Output.Append(data);
-                        writer.WriteLine(data);
-                        writer.Flush();
-                    }
-                   
+                    Client.Connect(point);
+                    Client.BeginAccept(_Accept, null);
+                    Task task1 = Task.Factory.StartNew(() => _Recieve(reader));
+                    task1.Wait();
+                    
                 }
-                _listsockets.BeginAccept(_Accept, null);
             }
-            catch (ObjectDisposedException)
+            
+            catch (Exception ex)
             {
-                ErrorsList.IsServerCloled = true;
+                Errors.Add(ex.Message);
             }
-            catch (SocketException ex)
-            {
-                ErrorsList.SocketExeption = true;
-            }
-        }
-        public async Task StartServiceAsync(int port, string msg)
-        {
-            Port = port;
-            //Task.Delay(100);
-            Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint point = new IPEndPoint(IPAddress.Loopback, Port);
-            socket.Connect(point);
-            using (NetworkStream stream = new NetworkStream(socket))
-            using (StreamReader reader = new StreamReader(stream))
-            using (StreamWriter writer = new StreamWriter(stream))
-            {
-                _ = Task.Delay(100);
-                Task task1 = Task.Factory.StartNew(() => _Recieve(reader));
-                   // _Recieve(reader);
-                if (msg != "")
-                {
-                    writer.WriteLine(msg);
-                    writer.Flush();
-                }
-                socket.Shutdown(SocketShutdown.Send);
-                task1.Wait();
-            }
-            _listsockets.Close();
+           // Errors = new List<string>();
+           // Port = port;
+           // Responce = new byte[256];
+           // //IPHostEntry entry = Dns.GetHostEntry(host);
+           // //IPAddress ip = entry.AddressList[0];
+           // //IPEndPoint point = new IPEndPoint(ip, port);
+           //IPEndPoint point = new IPEndPoint(IPAddress.Loopback, Port);
+           
+           // try
+           // {
+           //     Client = new Socket(SocketType.Stream, ProtocolType.Tcp);
+           //     Client.Bind(point);
+           //     Client.Listen(10);
+            
+           //     TcpClient cl = new TcpClient();
+                
+           //     using (NetworkStream stream = cl.GetStream())
+           //     using (StreamReader reader = new StreamReader(stream))
+           //     using (StreamWriter writer = new StreamWriter(stream))
+           //     {
+           //         //NetworkStream f = new NetworkStream(client);
+           //         //f.
+           //         Client.Connect(point);
+           //         Client.Accept().Receive(Responce);
+           //         Task task = Task.Factory.StartNew(() => _Recieve(reader));
+           //         task.Wait();
+           //         if (msg != "")
+           //         {
+           //             writer.WriteLine(msg);
+           //             writer.Flush();
+           //         }
+           //         Client.Shutdown(SocketShutdown.Both);
+           //         task.Wait();
+           //     }
+               
+           //     //Client.Close();
+           //     //Output.Append(server.sb);
+           // }
+           // catch (ObjectDisposedException)
+           // {
+           //     Errors.Add("Error: server closed");
+               
+           // }
+           // catch (SocketException ex1)
+           // {
+           //   // ErrorsList.SocketExeption = true;
+           //     Errors.Add("Socket exeption "+ex1.Message);
+           // }
+           // catch (IOException ex2)
+           // {
+           //     Errors.Add("Error: " + ex2.Message);
+           // }
+           // finally
+           // {
+                
+           //     //Client.Disconnect(false);
+           //     //Client.Disconnect();
+                
+           //     Client.Close();
+
+           //     //Client.Dispose();
+           // }
           
+        }
+        private async void _Accept(IAsyncResult rez)
+        {
+
+        }
+        private void SocketClosing (IAsyncResult ar)
+        {
+            Socket s = (Socket)ar;
+            s.Close();
         }
         private async Task _Recieve(StreamReader reader)
         {
 
             string text = "";
+            Output.Append("Client requered:\n");
             while ((text = await reader.ReadLineAsync()) != null)
             {
-                Output.Append(text);
-                
+               Output.Append(text+ "\n");
             }
-          //  return text;
+        }
+        public bool Validate()
+        {
+            return Errors.Count == 0;
         }
     }
     
