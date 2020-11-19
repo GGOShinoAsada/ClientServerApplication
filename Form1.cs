@@ -19,12 +19,22 @@ namespace ClientServerApplication
         {
             InitializeComponent();
         }
-
+        private void block(bool flag)
+        {
+            button1.Enabled = flag;
+            button2.Enabled = flag;
+        }
         private void button1_Click(object sender, EventArgs e)
         {
-            ClientServerExecute ex = new ClientServerExecute();
-            ex.StartServiceAsync(8080, textBox1.Text);
-            richTextBox1.Text = ex.Output.ToString();
+            Task.Delay(100);
+            Client client = new Client();
+            client.Connect(textBox1.Text);
+            richTextBox1.Text += client.Validate() ? client.AllOutput.ToString() : client.AllErrors.ToString();
+            //block(false);
+            //ClientServerExecute ex = new ClientServerExecute();
+            //ex.StartService(8080, textBox1.Text);
+            //richTextBox1.Text += ex.Output.ToString()+"\n";
+            //block(true);
         }
 
         private void button1_Click_1(object sender, EventArgs e)
